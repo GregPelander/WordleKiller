@@ -44,7 +44,7 @@ class Knowledge:
         # external
 
         # derived knowledge
-        self.clean_words = self.all_words.copy()
+        self.clean_words = self.cleanse(self.all_words)
         self.letter_frequency = defaultdict(int)
 
     def add_knowledge(self, _guess, _results):
@@ -56,11 +56,11 @@ class Knowledge:
                 self.present.add(_guess[i])
             else:
                 self.absent.add(_guess[i])
-        self.cleanse()
+        self.clean_words = self.cleanse(self.clean_words)
 
-    def cleanse(self):
-        word_list = []
-        for word in self.clean_words:
+    def cleanse(self, dirty_words):
+        cleaned_words = []
+        for word in dirty_words:
             add_word = True
             for place in self.known:
                 if word[place] != self.known[place]:
@@ -73,19 +73,24 @@ class Knowledge:
                     add_word = False
                     break
             if add_word:
-                word_list.append(word)
-        self.clean_words = word_list.copy()
+                cleaned_words.append(word)
+        return cleaned_words
 
-    def get_letter_frequency(self):
-        for word in self.clean_words:
+    def get_letter_frequency(self, word_list):
+        freq = defaultdict(int)
+        for word in word_list:
             for letter in self.all_letters:
                 if letter in word:
-                    self.letter_frequency[letter] += 1
+                    freq[letter] += 1
+        return freq
 
     def make_guess_naive(self):
-        self.get_letter_frequency()
-        print(self.letter_frequency)
         return random.choice(self.clean_words)
+
+    def make_guess_frequency(self):
+        self.letter_frequency = self.get_letter_frequency(self.clean_words)
+
+
 
 
 # initial conditions
