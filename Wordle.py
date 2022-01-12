@@ -34,6 +34,7 @@ class Knowledge:
     def __init__(self):
         # initial knowledge
         self.all_words = get_all_words()
+        self.all_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         # acquired knowledge
         self.known = {}
@@ -44,6 +45,7 @@ class Knowledge:
 
         # derived knowledge
         self.clean_words = self.all_words.copy()
+        self.letter_frequency = defaultdict(int)
 
     def add_knowledge(self, _guess, _results):
         for i in range(0, 5):
@@ -74,7 +76,15 @@ class Knowledge:
                 word_list.append(word)
         self.clean_words = word_list.copy()
 
+    def get_letter_frequency(self):
+        for word in self.clean_words:
+            for letter in self.all_letters:
+                if letter in word:
+                    self.letter_frequency[letter] += 1
+
     def make_guess_naive(self):
+        self.get_letter_frequency()
+        print(self.letter_frequency)
         return random.choice(self.clean_words)
 
 
