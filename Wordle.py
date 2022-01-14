@@ -40,13 +40,13 @@ class Harness:
     def run_tests(self):
         run_number = 1
         while run_number <= self.number_of_runs:
+            print(f'Run {run_number} out of {self.number_of_runs}')
             for model in self.test_models:
                 guesses = self.run_guesses(model, True)
                 avg = (self.averages[model] * (run_number - 1) + guesses) / run_number
                 self.averages[model] = avg
             run_number += 1
             self.word = random.choice(self.words)
-            print(f'Run: {run_number}  N:{self.averages["naive"]} F:{self.averages["freq"]} H:{self.averages["halving"]}')
 
         print('Results:\n')
         for model in self.test_models:

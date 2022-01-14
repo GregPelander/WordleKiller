@@ -21,11 +21,14 @@ def find_best_divisor(freq_dict, excluded, total_count):
     return best_letter
 
 
-# get initial word list
+all_words = []
+
+
+# get initial word list in singleton pattern
 def get_all_words():
-    _words = []
-    f = open('word-list.txt')
-    for line in f:
-        _words.append(line.strip())
-    f.close()
-    return _words
+    if len(all_words) == 0:
+        f = open('word-list.txt')
+        for line in f:
+            all_words.append(line.strip())
+        f.close()
+    return all_words
