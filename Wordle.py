@@ -1,131 +1,78 @@
-from collections import defaultdict
 import random
+from knowledge import Knowledge
 import wordle_utils
-
-# config
-number_of_guesses = 6
-word_length = 5
 
 
 # i/o
-def export_guess(_guess):
-    print(f"Guess: {_guess}")
+def export_guess(guess):
+    print(f'Guess: {guess}')
 
 
 def import_response():
-    _response = input("Enter the results as a string.\n:"
-                      "Y = yes; N = no; S = somewhere;\n"
-                      "E.x., 'YNNSY'\n"
-                      "Results: ")
-    return _response
+    response = input('Enter the results as a string.\n:'
+                     'Y = yes; N = no; S = somewhere;\n'
+                     'E.x., "YNNSY"\n'
+                     'Results: ')
+    return response
 
 
-# get initial word list
-def get_all_words():
-    _words = []
-    f = open('word-list.txt')
-    for line in f:
-        _words.append(line.strip())
-    f.close()
-    return _words
-
-# utility function to get max
-
-
-# an object representing what we know about the word
-class Knowledge:
+class Harness:
     def __init__(self):
-        # initial knowledge
-        self.all_words = get_all_words()
-        self.all_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.number_of_runs = 10000
+        self.test_models = ['naive', 'freq', 'halving']
+        self.words = wordle_utils.get_all_words()
+        self.averages = {}
+        self.word = random.choice(self.words)
+        for model in self.test_models:
+            self.averages[model] = 0.0
 
-        # acquired knowledge
-        self.known_positions = {}
-        self.present = set()
-        self.absent = set()
-        self.known_non_positions = defaultdict(set)
-
-        # derived knowledge
-        self.clean_words = self.cleanse(self.all_words)
-        self.clean_letter_frequency = defaultdict(int)
-
-    def add_knowledge(self, _guess, _results):
-        for i in range(0, 5):
-            if _results[i] == 'Y':
-                self.known_positions[i] = _guess[i]
-                self.present.add(_guess[i])
-            elif _results[i] == 'S':
-                self.present.add(_guess[i])
-                self.known_non_positions[_guess[i]].add(i)
+    def guess(self, guess):
+        response = ''
+        for place, letter in enumerate(guess):
+            if self.word[place] == letter:
+                response += 'Y'
+            elif letter in self.word:
+                response += 'S'
             else:
-                self.absent.add(_guess[i])
-                self.known_non_positions[_guess[i]].add(i)
-        print(self.known_non_positions)
-        self.clean_words = self.cleanse(self.clean_words, self.present)
+                response += 'N'
+        return response
 
-    def cleanse(self, dirty_words, must_include=None):
-        cleaned_words = []
-        for word in dirty_words:
-            add_word = True
-            for place in self.known_positions:
-                if word[place] != self.known_positions[place]:
-                    add_word = False
-                    break
-            if not add_word:
-                continue
-            for place, letter in enumerate(word):
-                if letter in self.absent:
-                    add_word = False
-                    break
-                if place in self.known_non_positions[letter]:
-                    add_word = False
-                    break
-            if must_include:
-                for letter in must_include:
-                    if letter not in word:
-                        add_word = False
-                        break
-            if add_word:
-                cleaned_words.append(word)
-        return cleaned_words
+    def run_tests(self):
+        run_number = 1
+        while run_number <= self.number_of_runs:
+            for model in self.test_models:
+                guesses = self.run_guesses(model, True)
+                avg = (self.averages[model] * (run_number - 1) + guesses) / run_number
+                self.averages[model] = avg
+            run_number += 1
+            self.word = random.choice(self.words)
+            print(f'Run: {run_number}  N:{self.averages["naive"]} F:{self.averages["freq"]} H:{self.averages["halving"]}')
 
-    def get_letter_frequency(self, word_list):
-        freq = defaultdict(int)
-        for word in word_list:
-            for letter in self.all_letters:
-                if letter in word:
-                    freq[letter] += 1
-        return freq
+        print('Results:\n')
+        for model in self.test_models:
+            print(f'{model}: {self.averages[model]}')
 
-    def make_guess_naive(self):
-        return random.choice(self.clean_words)
+    def run_guesses(self, model_type, is_test=False):
+        # naive, freq, halving
+        # initial conditions
+        guess, response = None, None
+        knowledge = Knowledge()
+        guess_num = 1
 
-    # we'll make guesses based on the most frequent available letters
-    def make_guess_freq(self):
-        test_letters = set()
-        test_words = self.clean_words.copy()
-
-        while len(test_words) > 0:
-            last_words = test_words.copy()
-            letter_freq = self.get_letter_frequency(test_words)
-            test_letter = wordle_utils.find_max_freq(letter_freq, test_letters)
-            if not test_letter:
+        # main guessing loop
+        while response != 'YYYYY':
+            guess = knowledge.run_model(model_type)
+            if is_test:
+                response = self.guess(guess)
+            else:
+                export_guess(guess)
+                response = import_response()
+            if response == 'YYYYY':
                 break
-            test_letters.add(test_letter)
-            test_words = self.cleanse(test_words, test_letters)
-            print(test_words)
-
-        return random.choice(last_words)
+            knowledge.add_knowledge(guess, response)
+            guess_num += 1
+        return guess_num
 
 
-# initial conditions
-guess, response = None, None
-knowledge = Knowledge()
-
-# main guessing loop
-while number_of_guesses > 0:
-    guess = knowledge.make_guess_freq()
-    export_guess(guess)
-    response = import_response()
-    knowledge.add_knowledge(guess, response)
-    number_of_guesses -= 1
+harness = Harness()
+harness.run_tests()

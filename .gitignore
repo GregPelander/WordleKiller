@@ -1,3 +1,8 @@
 
 .idea/vcs.xml
 .idea/.name
+__pycache__/knowledge.cpython-310.pyc
+__pycache__/wordle_utils.cpython-310.pyc
+__pycache__/wordle_utils.cpython-310.pyc
+*.pyc
+*.pyc

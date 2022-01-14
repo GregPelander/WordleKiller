@@ -6,3 +6,26 @@ def find_max_freq(freq_dict, excluded):
             max_count = freq_dict[letter]
             max_letter = letter
     return max_letter
+
+
+def find_best_divisor(freq_dict, excluded, total_count):
+    target = total_count / 2
+    min_diff = None
+    best_letter = None
+    for letter in freq_dict:
+        if letter not in excluded:
+            diff = abs(target - freq_dict[letter])
+            if min_diff is None or min_diff > diff:
+                min_diff = diff
+                best_letter = letter
+    return best_letter
+
+
+# get initial word list
+def get_all_words():
+    _words = []
+    f = open('word-list.txt')
+    for line in f:
+        _words.append(line.strip())
+    f.close()
+    return _words
