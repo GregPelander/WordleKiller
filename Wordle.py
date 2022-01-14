@@ -40,12 +40,10 @@ class Knowledge:
         self.all_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         # acquired knowledge
-        self.known = {}
+        self.known_positions = {}
         self.present = set()
         self.absent = set()
-        # TODO: include a multi-set of places present letters can't exist
-
-        # external
+        self.known_non_positions = defaultdict(set)
 
         # derived knowledge
         self.clean_words = self.cleanse(self.all_words)
@@ -54,26 +52,32 @@ class Knowledge:
     def add_knowledge(self, _guess, _results):
         for i in range(0, 5):
             if _results[i] == 'Y':
-                self.known[i] = _guess[i]
+                self.known_positions[i] = _guess[i]
                 self.present.add(_guess[i])
             elif _results[i] == 'S':
                 self.present.add(_guess[i])
+                self.known_non_positions[_guess[i]].add(i)
             else:
                 self.absent.add(_guess[i])
+                self.known_non_positions[_guess[i]].add(i)
+        print(self.known_non_positions)
         self.clean_words = self.cleanse(self.clean_words, self.present)
 
     def cleanse(self, dirty_words, must_include=None):
         cleaned_words = []
         for word in dirty_words:
             add_word = True
-            for place in self.known:
-                if word[place] != self.known[place]:
+            for place in self.known_positions:
+                if word[place] != self.known_positions[place]:
                     add_word = False
                     break
             if not add_word:
                 continue
-            for letter in word:
+            for place, letter in enumerate(word):
                 if letter in self.absent:
+                    add_word = False
+                    break
+                if place in self.known_non_positions[letter]:
                     add_word = False
                     break
             if must_include:
