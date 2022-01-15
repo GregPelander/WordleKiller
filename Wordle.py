@@ -17,12 +17,15 @@ def import_response():
 
 
 class Harness:
-    def __init__(self):
-        self.number_of_runs = 10000
-        self.test_models = ['naive', 'freq', 'halving']
+    def __init__(self, num_runs=100, word=None):
+        self.number_of_runs = num_runs
+        self.test_models = ['naive', 'freq', 'halving', 'elim']
+        self.verbose = True
         self.words = wordle_utils.get_all_words()
         self.averages = {}
-        self.word = random.choice(self.words)
+        self.word = word
+        if not self.word:
+            self.word = random.choice(self.words)
         for model in self.test_models:
             self.averages[model] = 0.0
 
@@ -61,7 +64,7 @@ class Harness:
 
         # main guessing loop
         while response != 'YYYYY':
-            guess = knowledge.run_model(model_type)
+            guess = knowledge.run_model(model_type, guess_num)
             if is_test:
                 response = self.guess(guess)
             else:
@@ -74,5 +77,5 @@ class Harness:
         return guess_num
 
 
-harness = Harness()
+harness = Harness(100, 'TANGY')
 harness.run_tests()

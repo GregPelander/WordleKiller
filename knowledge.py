@@ -22,8 +22,8 @@ class Knowledge:
 
     def guessed_letters(self):
         letters = set()
-        letters.add(self.present)
-        letters.add(self.absent)
+        letters.update(self.present)
+        letters.update(self.absent)
         return letters
 
     def add_knowledge(self, _guess, _results):
@@ -73,7 +73,7 @@ class Knowledge:
                     freq[letter] += 1
         return freq
 
-    def run_model(self, model_name):
+    def run_model(self, model_name, guess_number):
         match model_name:
             case 'naive':
                 return self.make_guess_naive()
@@ -81,6 +81,8 @@ class Knowledge:
                 return self.make_guess_freq()
             case 'halving':
                 return self.make_guess_halving()
+            case 'elim':
+                return self.make_guess_elim(guess_number)
         return
 
     def make_guess_naive(self):
@@ -105,6 +107,27 @@ class Knowledge:
     # trying to cut the problem area in half
     def make_guess_halving(self):
         test_letters = set()
+        test_words = self.clean_words.copy()
+
+        while len(test_words) > 0:
+            test_count = len(test_words)
+            last_words = test_words.copy()
+            letter_freq = self.get_letter_frequency(test_words)
+            test_letter = wordle_utils.find_best_divisor(letter_freq, test_letters, test_count)
+            if not test_letter:
+                break
+            test_letters.add(test_letter)
+            test_words = self.cleanse(test_words, test_letters)
+
+        return random.choice(last_words)
+
+    # halving approach, but second guess is new letters
+    def make_guess_elim(self, guess_number):
+        # if this is our second guess, we should a completely new set of letters
+        if guess_number == 2:
+            test_letters = self.guessed_letters()
+        else:
+            test_letters = set()
         test_words = self.clean_words.copy()
 
         while len(test_words) > 0:
